@@ -1,0 +1,6 @@
+[submodule "src_chat"]
+	path = src_chat
+	url = git@github.com:shilenko-n/our-horses-chat.git
+[submodule "src_main"]
+	path = src_main
+	url = git@github.com:shilenko-n/our-horses-main.git
