@@ -4,11 +4,11 @@ services:
       context: ./src_main
       dockerfile: ../docker/common/php-fpm/Dockerfile
     container_name: main-api
-    env_file:
-      - ./src_main/.env
+    environment:
+      XDG_CONFIG_HOME: /var/www/html/.config
     volumes:
-      - ./src_main:/var/www/html
-      - vendor_data:/var/www/html/vendor
+      - ./src_main/storage:/var/www/html/storage
+      - ./src_main/.env:/var/www/html/.env
     depends_on:
       - main-db
       - main-redis
@@ -17,7 +17,9 @@ services:
     image: postgres:latest
     container_name: main-db
     environment:
+      POSTGRES_USER: root
       POSTGRES_PASSWORD: secret
+      POSTGRES_DB: laravel
     volumes:
       - main-db-data:/var/lib/postgresql/data
 
@@ -36,9 +38,45 @@ services:
     depends_on:
       - main-api
 
+  chat-api:
+    build:
+      context: ./src_chat
+      dockerfile: ../docker/common/php-fpm/Dockerfile
+    container_name: chat-api
+    environment:
+      XDG_CONFIG_HOME: /var/www/html/.config
+    volumes:
+      - ./src_chat/storage:/var/www/html/storage
+      - ./src_chat/.env:/var/www/html/.env
+    depends_on:
+      - chat-db
+      - chat-redis
+
+  chat-nginx:
+    image: nginx:latest
+    container_name: chat-nginx
+    volumes:
+      - ./src_chat:/var/www/html
+      - ./docker/common/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - chat-api
+
+  chat-db:
+    image: postgres:latest
+    container_name: chat-db
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: chat
+    volumes:
+      - chat-db-data:/var/lib/postgresql/data
+
+  chat-redis:
+    image: redis:latest
+    container_name: chat-redis
 
 
 
 volumes:
   main-db-data:
-  vendor_data:
+  chat-db-data:
