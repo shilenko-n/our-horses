@@ -1,4 +1,4 @@
-FROM php:8.2-fpm
+FROM php:8.3-fpm
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     zip \
     curl \
+    nodejs \
+    npm \
     && docker-php-ext-configure gd \
         --with-freetype \
         --with-jpeg \
@@ -24,13 +26,18 @@ COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+RUN npm install -g fantasticon
+
+RUN mkdir -p /var/www/.npm && chown -R www-data:www-data /var/www/.npm
+
 COPY ./docker/development/php-fpm/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 COPY --chown=www-data:www-data . .
 
 USER www-data
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --optimize-autoloader
+RUN npm ci && npm run build
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
